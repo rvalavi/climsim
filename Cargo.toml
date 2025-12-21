@@ -15,3 +15,4 @@ numpy = {version = "0.22", features = ["gil-refs"]}
 ndarray = "0.16"
 rayon = "1.10"  # or the latest version
 num_cpus = "1.16"
+simsimd = "6.5.9"

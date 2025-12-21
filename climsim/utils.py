@@ -35,24 +35,28 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
     """Read raster(s) with nodata->nan.
 
     Output shape invariant:
-        - Always returns a 3D array
-        - Axis 0 = band index (single file) OR file index (multi-file input)
+        - Always returns a 3D array with bands last: (rows, cols, bands)
+        - Single file: bands = raster bands
+        - Multiple files (single-band each): bands = file index
+
     is_geo : bool
         Whether CRS is geographic (lon/lat).
     """
     def _is_geographic(src) -> bool:
         try:
             if src.crs is None:
-                return is_geographic(src)
+                return is_geographic(src)  # your existing heuristic fn
             return src.crs.is_geographic
         except Exception as e:
             raise RuntimeError(f"Error reading CRS info: {e}")
 
-    def _read_one(path: PathLike) -> Tuple[np.ndarray, bool]:
+    def _read_one(path: Path) -> Tuple[np.ndarray, bool]:
         with rasterio.open(path) as src:
             is_geo = _is_geographic(src)
             data = src.read(masked=True)  # (bands, rows, cols)
             arr = np.where(data.mask, np.nan, data).astype(np.float32)
+            # Make it (rows, cols, bands) for fast per-cell band vectors in Rust
+            arr = np.moveaxis(arr, 0, -1)
             return arr, is_geo
 
     # single path
@@ -68,16 +72,16 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
     shape0 = None
 
     for f in files:
-        arr, is_geo = _read_one(f)
+        arr, is_geo = _read_one(f)  # (rows, cols, bands)
 
         # For multi-file stacking, enforce exactly 1 band per file
-        if arr.ndim != 3 or arr.shape[0] != 1:
+        if arr.ndim != 3 or arr.shape[2] != 1:
             raise ValueError(
                 f"Multi-file input expects single-band rasters; '{f}' has shape {arr.shape}"
             )
 
-        # Drop the band axis (since it's guaranteed 1) before stacking files
-        arr2d = arr[0]  # (rows, cols)
+        # Drop the singleton band axis -> (rows, cols)
+        arr2d = arr[..., 0]
 
         if is_geo0 is None:
             is_geo0 = is_geo
@@ -92,6 +96,7 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
 
         arrays.append(arr2d)
 
-    stacked = np.stack(arrays, axis=0).astype(np.float32)  # (n_files, rows, cols)
+    # Stack files into the *band* axis (bands last): (rows, cols, n_files)
+    stacked = np.stack(arrays, axis=-1).astype(np.float32)
     return stacked, bool(is_geo0)
 

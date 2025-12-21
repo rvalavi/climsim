@@ -18,7 +18,7 @@ def simialrity(
     :type exact: bool
     """
 
-    outarray = sim(
+    outarray = sumilarityrs(
 
     )
 
