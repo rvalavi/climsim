@@ -1,3 +1,4 @@
+from utils import read_rast
 
 def simialrity(
         file: str, 
@@ -10,17 +11,12 @@ def simialrity(
     
     :param file: Description
     :type file: str
-    :param local: Description
-    :type local: bool
-    :param raduis: Description
-    :type raduis: float | None
-    :param exact: Description
-    :type exact: bool
     """
 
-    outarray = sumilarityrs(
+    r = read_rast(file)
 
+    outarray = similaritypy(
+        arr = r,
     )
-
 
     return outarray

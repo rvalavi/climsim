@@ -5,7 +5,10 @@ use simsimd::SpatialSimilarity;
 
 
 /// Core fn for calculating similarity
-pub fn similarity(x: Array3<f32>) -> Array2<f64> {
+pub fn similarityrs(
+    x: Array3<f32>,
+    is_geo: bool,
+) -> Array2<f64> {
     let (rows, cols, _bands) = x.dim();
     assert!(cols >= 2, "Need at least 2 columns");
 

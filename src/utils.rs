@@ -2,8 +2,8 @@ use ndarray::Array3;
 use numpy::PyArray3;
 use pyo3::{Bound, PyAny, PyResult};
 use pyo3::types::PyAnyMethods;
-         
-            
+
+
 /// Simple way to convert a Python 3D numpy array into a Rust `Array3<f32>`.
 pub fn to_array3<'py>(x: &Bound<'py, PyAny>) -> PyResult<Array3<f32>> {
     let py_array: &PyArray3<f32> = x.extract()?;
@@ -16,11 +16,11 @@ pub fn to_array3<'py>(x: &Bound<'py, PyAny>) -> PyResult<Array3<f32>> {
 fn euclidean(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
     let dx = x2 - x1;
     let dy = y2 - y1;
-    // Use hypot to avoid intermediate overflow/underflow and get accurate result
+    // Using hypot to avoid intermediate overflow/underflow with accurate result
     dx.hypot(dy)
 }
 
-// Calculate Haversine distance for points in geographic coordinates system
+/// Calculate Haversine distance for points in geographic coordinates system
 fn haversine(lon1: f64, lat1: f64, lon2: f64, lat2: f64) -> f64 {
     let r = 6_371_000.0; // mean Earth radius in meters
     let (lat1, lon1) = (lat1.to_radians(), lon1.to_radians());
@@ -36,7 +36,7 @@ fn haversine(lon1: f64, lat1: f64, lon2: f64, lat2: f64) -> f64 {
     r * c
 }
 
-/// Calculate distance of cells in kilometer
+/// Calculate distance of two points/cells in kilometer
 pub fn distance_km(x1: f64, y1: f64, x2: f64, y2: f64, geo: bool) -> f32 {
     let dist: f64 = if geo {
         haversine(x1, y1, x2, y2)
