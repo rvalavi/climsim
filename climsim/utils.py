@@ -61,7 +61,11 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
 
     # single path
     if isinstance(files, (str, bytes)) or hasattr(files, "__fspath__"):
-        return _read_one(files)
+        arr, is_geo = _read_one(files)
+        # Reshape the array to (cell, band); this way be consistant for Rust
+        rows, cols, n_bands = arr.shape
+        flat = arr.reshape(rows * cols, n_bands)
+        return flat, bool(is_geo), (rows, cols)
 
     # list/tuple of paths
     if not isinstance(files, (list, tuple)) or len(files) == 0:
@@ -98,5 +102,8 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
 
     # Stack files into the *band* axis (bands last): (rows, cols, n_files)
     stacked = np.stack(arrays, axis=-1).astype(np.float32)
-    return stacked, bool(is_geo0)
+    # Reshape the array to (cell, band); this way be consistant for Rust
+    rows, cols, n_bands = stacked.shape
+    flat = stacked.reshape(rows * cols, n_bands)
+    return flat, bool(is_geo0), (rows, cols)
 

@@ -1,32 +1,37 @@
-use ndarray::{Array3, Array2, s};
+use ndarray::Array2;
 use rayon::prelude::*;
-use std::ops::Neg;
-use simsimd::SpatialSimilarity;
+use simsimd::SpatialSimilarity; // gives f32::euclidean, etc.
 
+pub fn similarityrs(x: &Array2<f32>) -> Result<Vec<f64>, String> {
+    let (rows, cols) = x.dim();
+    if cols < 2 {
+        return Err("Need at least 2 columns".into());
+    }
 
-/// Core fn for calculating similarity
-pub fn similarityrs(
-    x: Array3<f32>,
-    is_geo: bool,
-) -> Array2<f64> {
-    let (rows, cols, _bands) = x.dim();
-    assert!(cols >= 2, "Need at least 2 columns");
+    // One-time: ensure contiguous standard layout (row-major).
+    let x = x.as_standard_layout().to_owned();
+    let data = x.as_slice().ok_or("Array not contiguous")?;
 
-    let out_len = rows * (cols - 1);
-    let mut out = vec![0.0f64; out_len];
+    let out: Vec<f64> = (0..rows)
+        .into_par_iter()
+        .map(|i| {
+            let a = &data[i * cols..(i + 1) * cols];
 
-    out.par_iter_mut()
-        .enumerate()
-        .for_each(|(k, out_cell)| {
-            let i = k / (cols - 1);
-            let j = k % (cols - 1);
+            let mut acc = 0.0f64;
+            for j in 0..rows {
+                if j == i { continue; }
+                let b = &data[j * cols..(j + 1) * cols];
 
-            let va = x.slice(s![i, j, ..]).as_slice().unwrap();
-            let vb = x.slice(s![i, j + 1, ..]).as_slice().unwrap();
+                // simsimd pattern (Result<f32, _>)
+                let d = f32::euclidean(a, b).expect("Unequal length") as f64;
 
-            *out_cell = f32::euclidean(va, vb).expect("Unequal length").neg().exp();
-        });
+                // Ecological distance
+                acc += (-d).exp();
+            }
+            acc
+        })
+        .collect();
 
-    Array2::from_shape_vec((rows, cols - 1), out).unwrap()
+    Ok(out)
 }
 
