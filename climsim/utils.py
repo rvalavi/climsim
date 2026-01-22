@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Union, Sequence, Tuple
 import numpy as np
 import rasterio
@@ -35,7 +33,7 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
     """Read raster(s) with nodata->nan.
 
     Output shape invariant:
-        - Always returns a 3D array with bands last: (rows, cols, bands)
+        - Always returns a 2D array with: (cell, bands)
         - Single file: bands = raster bands
         - Multiple files (single-band each): bands = file index
 

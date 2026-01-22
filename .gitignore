@@ -1,5 +1,7 @@
 /target
+climsim/__pycache__/
 *.so
 */*.so
 climsim/*.so
 *.ipynb
+*.tif
