@@ -16,6 +16,9 @@ def simialrity(
     :type file: str
     """
 
+    if n_threads is None:
+        n_threads = os.cpu_count() or 1
+    
     r, geo, dim = read_rast(files)
 
     outarray = similaritypy(
