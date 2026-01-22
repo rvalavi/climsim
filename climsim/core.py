@@ -1,6 +1,6 @@
 from .utils import read_rast
 from climsim_rust import similaritypy
-
+import os
 
 def simialrity(
         files: str, 
