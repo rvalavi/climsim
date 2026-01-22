@@ -1,7 +1,10 @@
 /target
+data/
 climsim/__pycache__/
 *.so
 */*.so
 climsim/*.so
+.DS_Store
 *.ipynb
 *.tif
+*/*.tif
