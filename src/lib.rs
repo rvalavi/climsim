@@ -43,7 +43,7 @@ fn similaritypy(
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn climsim(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn climsim_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(similaritypy, m)?)?;
     Ok(())
 }
