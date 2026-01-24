@@ -11,17 +11,13 @@ pub fn similarityrs(x: &Array2<f32>, bandwidth: f64, nsample: usize, seed: u64) 
     let (rows, cols) = x.dim();
     anyhow::ensure!(cols >= 2, "Need at least 2 columns");
 
-    // One-time: ensure contiguous standard layout (row-major).
+    // Ensure contiguous standard layout (row-major).
     let x = x.as_standard_layout().to_owned();
     let data = x.as_slice().context("Array not contiguous")?;
 
-    // Pre-calc nan cells to skip processing
-    let valid: Vec<bool> = (0..rows)
-        .map(|i| data[i * cols..(i + 1) * cols].iter().all(|x| x.is_finite()))
-        .collect();
-
-    let valid_rows: Vec<usize> = valid.iter().enumerate()
-        .filter_map(|(i, &is_valid)| is_valid.then_some(i))
+    // Pre-calc valid cells to skip processing nan cells
+    let valid_rows: Vec<usize> = (0..rows)
+        .filter(|&i| data[i * cols..(i + 1) * cols].iter().all(|v| v.is_finite()))
         .collect();
 
     // Select random samples
