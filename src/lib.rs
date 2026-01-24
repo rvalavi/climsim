@@ -15,18 +15,21 @@ fn similaritypy(
     ncols: usize,
     // radius_km: f32,
     // is_geo: bool,
+    bandwidth: f64,
+    nsample: usize, 
+    seed: u64,
     n_cores: usize,
 ) -> PyResult<Py<PyArray2<f64>>> {
     let array: Array2<f32> = utils::to_array(arr)?;
 
-    // Optional: per-call thread count (local pool is safest in PyO3 contexts)
+    // local pool is safest in PyO3 contexts
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(n_cores.max(1))
         .build()
         .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
 
     let out: Vec<f64> = pool
-        .install(|| core::similarityrs(&array))
+        .install(|| core::similarityrs(&array, bandwidth, nsample, seed))
         .map_err(|er| PyRuntimeError::new_err(format!("Climsim failed: {er}")))?;
 
     let outarray: Array2<f64> = Array2::from_shape_vec((nrows, ncols), out)

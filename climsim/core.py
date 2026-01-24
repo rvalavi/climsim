@@ -6,8 +6,10 @@ def simialrity(
         files: str, 
         # local: bool = True,
         # raduis: float | None = None,
-        # exact: bool = False # use f32 for more exact calc, or bf16 for faster calc
-        n_threads,
+        band_width: float = 1.0,
+        n_sample: int | None = 10_000,
+        seed = 42,
+        n_threads = None,
     ):
     """
     Docstring for simialrity
@@ -18,6 +20,9 @@ def simialrity(
 
     if n_threads is None:
         n_threads = os.cpu_count() or 1
+
+    if n_sample is None or n_sample < 0:
+        n_sample = 0
     
     r, geo, dim = read_rast(files)
 
@@ -25,6 +30,9 @@ def simialrity(
         arr = r,
         nrows = dim[0],
         ncols = dim[1],
+        bandwidth = band_width,
+        nsample = n_sample,
+        seed = seed,
         n_cores = n_threads,
     )
 
