@@ -9,6 +9,7 @@ use crate::affines::Affine;
 use crate::utils;
 use crate::distance;
 
+
 pub fn similarityrs(
     x: &Array2<f32>, 
     trans: &Affine,
@@ -16,6 +17,7 @@ pub fn similarityrs(
     bandwidth: f64,
     radius: Option<f32>,
     nsample: usize, 
+    ncols: usize,
     seed: u64
 ) -> Result<Vec<f64>> {
     let (rows, cols) = x.dim();
@@ -27,7 +29,7 @@ pub fn similarityrs(
     let data = x.as_slice().context("Array not contiguous")?;
 
     // Get the XY for distance calc
-    let xy: Vec<(f64, f64)> = utils::get_xy(data.len(), cols, trans)?;
+    let xy: Vec<(f64, f64)> = utils::get_xy(data.len(), ncols, trans)?;
 
     // Pre-calc valid cells to skip processing nan cells
     let valid_rows: Vec<usize> = (0..rows)

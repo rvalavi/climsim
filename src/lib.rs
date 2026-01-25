@@ -34,7 +34,7 @@ fn similaritypy(
         .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
 
     let out: Vec<f64> = pool
-        .install(|| core::similarityrs(&array, &affine, is_geo, bandwidth, radius, nsample, seed))
+        .install(|| core::similarityrs(&array, &affine, is_geo, bandwidth, radius, nsample, ncols, seed))
         .map_err(|er| PyRuntimeError::new_err(format!("Climsim failed: {er}")))?;
 
     let outarray: Array2<f64> = Array2::from_shape_vec((nrows, ncols), out)

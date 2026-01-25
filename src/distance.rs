@@ -30,5 +30,5 @@ pub fn distance_km(x1: f64, y1: f64, x2: f64, y2: f64, geo: bool) -> f32 {
         euclidean(x1, y1, x2, y2)
     };
 
-    (dist / 1000.0)  as f32
+    (dist / 1000.0) as f32
 }
