@@ -3,9 +3,8 @@ from climsim_rust import similaritypy
 import os
 
 def simialrity(
-        files: str, 
-        # local: bool = True,
-        # raduis: float | None = None,
+        files: str,
+        raduis: float | None = None,
         band_width: float = 1.0,
         n_sample: int | None = 10_000,
         seed = 42,

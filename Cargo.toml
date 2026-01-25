@@ -18,3 +18,9 @@ num_cpus = "1.16"
 simsimd = "6.5.9"
 rand = "0.8"
 anyhow = "1.0.100"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+opt-level = 3 
