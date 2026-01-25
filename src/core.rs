@@ -5,15 +5,29 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand::seq::index::sample;
 use anyhow::{Result, Context};
+use crate::affines::Affine;
+use crate::utils;
+use crate::distance;
 
-
-pub fn similarityrs(x: &Array2<f32>, bandwidth: f64, nsample: usize, seed: u64) -> Result<Vec<f64>> {
+pub fn similarityrs(
+    x: &Array2<f32>, 
+    trans: &Affine,
+    is_geo: bool, 
+    bandwidth: f64,
+    radius: Option<f32>,
+    nsample: usize, 
+    seed: u64
+) -> Result<Vec<f64>> {
     let (rows, cols) = x.dim();
     anyhow::ensure!(cols >= 2, "Need at least 2 columns");
+    anyhow::ensure!(bandwidth.is_finite() && bandwidth > 0.0, "bandwidth must be > 0 and finite");
 
     // Ensure contiguous standard layout (row-major).
     let x = x.as_standard_layout().to_owned();
     let data = x.as_slice().context("Array not contiguous")?;
+
+    // Get the XY for distance calc
+    let xy: Vec<(f64, f64)> = utils::get_xy(data.len(), cols, trans)?;
 
     // Pre-calc valid cells to skip processing nan cells
     let valid_rows: Vec<usize> = (0..rows)
@@ -36,13 +50,23 @@ pub fn similarityrs(x: &Array2<f32>, bandwidth: f64, nsample: usize, seed: u64) 
     let mut out = vec![f64::NAN; rows];
 
     let results: Vec<(usize, f64)> = valid_rows
-        .par_iter()
-        .map(|&i| {
+        .into_par_iter()
+        .map(|i| {
             let a = &data[i * cols..(i + 1) * cols];
             let mut acc = 0.0f64;
 
+            let (x1, y1) = xy[i];
+
             for &j in &sampled_rows {
                 if j == i { continue; }
+                
+                // Filter cells within the raduis
+                if let Some(r) = radius {
+                    let (x2, y2) = xy[j];
+                    let dist = distance::distance_km(x1, y1, x2, y2, is_geo);
+                    if dist > r { continue; }
+                }
+
                 let b = &data[j * cols..(j + 1) * cols];
                 let d = f32::euclidean(a, b).expect("Unequal length") as f64;
                 acc += (-d / bandwidth).exp();

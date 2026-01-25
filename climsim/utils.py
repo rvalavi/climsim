@@ -5,7 +5,6 @@ from os import PathLike
 
 Path = Union[str, PathLike[str]]
 
-
 def is_geographic(src):
     """Guess CRS type from transform and bounds when CRS is missing."""
     transform = src.transform
@@ -51,19 +50,20 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
     def _read_one(path: Path) -> Tuple[np.ndarray, bool]:
         with rasterio.open(path) as src:
             is_geo = _is_geographic(src)
+            trans = tuple(src.transform)[:6]
             data = src.read(masked=True)  # (bands, rows, cols)
             arr = np.where(data.mask, np.nan, data).astype(np.float32)
             # Make it (rows, cols, bands) for fast per-cell band vectors in Rust
             arr = np.moveaxis(arr, 0, -1)
-            return arr, is_geo
+            return arr, trans, is_geo
 
     # single path
     if isinstance(files, (str, bytes)) or hasattr(files, "__fspath__"):
-        arr, is_geo = _read_one(files)
+        arr, trans, is_geo = _read_one(files)
         # Reshape the array to (cell, band); this way be consistant for Rust
         rows, cols, n_bands = arr.shape
         flat = arr.reshape(rows * cols, n_bands)
-        return flat, bool(is_geo), (rows, cols)
+        return flat, trans, bool(is_geo), (rows, cols)
 
     # list/tuple of paths
     if not isinstance(files, (list, tuple)) or len(files) == 0:
@@ -74,7 +74,7 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
     shape0 = None
 
     for f in files:
-        arr, is_geo = _read_one(f)  # (rows, cols, bands)
+        arr, trans, is_geo = _read_one(f)  # (rows, cols, bands)
 
         # For multi-file stacking, enforce exactly 1 band per file
         if arr.ndim != 3 or arr.shape[2] != 1:
@@ -103,5 +103,5 @@ def read_rast(files: Union[Path, Sequence[Path]]) -> Tuple[np.ndarray, bool]:
     # Reshape the array to (cell, band); this way be consistant for Rust
     rows, cols, n_bands = stacked.shape
     flat = stacked.reshape(rows * cols, n_bands)
-    return flat, bool(is_geo0), (rows, cols)
+    return flat, trans, bool(is_geo0), (rows, cols)
 

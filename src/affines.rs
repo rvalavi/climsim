@@ -13,7 +13,7 @@ pub struct Affine {
 
 impl Affine {
     /// Convert (row, col) to (x, y) at pixel centre by default.
-    pub fn xy(&self, row: i32, col: i32) -> (f64, f64) {
+    pub fn xy(&self, row: usize, col: usize) -> (f64, f64) {
         let col_f = (col as f64) + 0.5;
         let row_f = (row as f64) + 0.5;
 

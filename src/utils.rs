@@ -2,7 +2,7 @@ use ndarray::Array2;
 use numpy::PyArray2;
 use pyo3::{Bound, PyAny, PyResult};
 use pyo3::types::PyAnyMethods;
-
+use crate::affines::Affine;
 
 /// Simple way to convert a Python 3D numpy array into a Rust `Array3<f32>`.
 pub fn to_array<'py>(x: &Bound<'py, PyAny>) -> PyResult<Array2<f32>> {
@@ -11,38 +11,17 @@ pub fn to_array<'py>(x: &Bound<'py, PyAny>) -> PyResult<Array2<f32>> {
     Ok(arr)
 }
 
+// Get xy from rows of a flatten array
+pub fn get_xy(n: usize, ncols: usize, transform: &Affine) -> anyhow::Result<Vec<(f64, f64)>> {
+    anyhow::ensure!(ncols > 0, "ncols must be > 0");
 
-// /// Euclidean distance for projected coordinates systems
-// fn euclidean(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
-//     let dx = x2 - x1;
-//     let dy = y2 - y1;
-//     // Using hypot to avoid intermediate overflow/underflow with accurate result
-//     dx.hypot(dy)
-// }
+    let out: Vec<(f64, f64)> = (0..n).into_iter()
+        .map(|i| {
+            let row = i / ncols;
+            let col = i % ncols;
+            transform.xy(row, col)
+        }).collect();
 
-// /// Calculate Haversine distance for points in geographic coordinates system
-// fn haversine(lon1: f64, lat1: f64, lon2: f64, lat2: f64) -> f64 {
-//     let r = 6_371_000.0; // mean Earth radius in meters
-//     let (lat1, lon1) = (lat1.to_radians(), lon1.to_radians());
-//     let (lat2, lon2) = (lat2.to_radians(), lon2.to_radians());
+    Ok(out)
+}
 
-//     let dlat = lat2 - lat1;
-//     let dlon = lon2 - lon1;
-
-//     let a = (dlat / 2.0).sin().powi(2)
-//         + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
-//     let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
-
-//     r * c
-// }
-
-// /// Calculate distance of two points/cells in kilometer
-// pub fn distance_km(x1: f64, y1: f64, x2: f64, y2: f64, geo: bool) -> f32 {
-//     let dist: f64 = if geo {
-//         haversine(x1, y1, x2, y2)
-//     } else {
-//         euclidean(x1, y1, x2, y2)
-//     };
-
-//     (dist / 1000.0)  as f32
-// }

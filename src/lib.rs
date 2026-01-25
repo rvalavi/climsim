@@ -5,22 +5,27 @@ use ndarray::Array2;
 // local mods
 mod core;
 mod utils;
+mod affines;
+mod distance;
+use affines::Affine;
 
 
 /// Python interface for Rust function
-#[pyfunction]
+#[pyfunction(signature = (arr, trans, is_geo, nrows, ncols, bandwidth, nsample, seed, n_cores, radius=None))]
 fn similaritypy(
     arr: &Bound<PyAny>,
+    trans: (f64, f64, f64, f64, f64, f64),
+    is_geo: bool,
     nrows: usize,
     ncols: usize,
-    // radius_km: f32,
-    // is_geo: bool,
     bandwidth: f64,
     nsample: usize, 
     seed: u64,
     n_cores: usize,
+    radius: Option<f32>,
 ) -> PyResult<Py<PyArray2<f64>>> {
     let array: Array2<f32> = utils::to_array(arr)?;
+    let affine: Affine = trans.into();
 
     // local pool is safest in PyO3 contexts
     let pool = rayon::ThreadPoolBuilder::new()
@@ -29,7 +34,7 @@ fn similaritypy(
         .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
 
     let out: Vec<f64> = pool
-        .install(|| core::similarityrs(&array, bandwidth, nsample, seed))
+        .install(|| core::similarityrs(&array, &affine, is_geo, bandwidth, radius, nsample, seed))
         .map_err(|er| PyRuntimeError::new_err(format!("Climsim failed: {er}")))?;
 
     let outarray: Array2<f64> = Array2::from_shape_vec((nrows, ncols), out)
