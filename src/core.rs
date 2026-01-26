@@ -20,6 +20,7 @@ pub fn dissimrs(
     ncols: usize,
     seed: u64
 ) -> Result<Vec<f64>> {
+    // Flatten array rows: number of cells; cols: number of raster bands
     let (rows, cols) = x.dim();
     anyhow::ensure!(cols >= 2, "Need at least 2 columns");
     anyhow::ensure!(bandwidth.is_finite() && bandwidth > 0.0, "bandwidth must be > 0 and finite");
@@ -29,7 +30,7 @@ pub fn dissimrs(
     let data = x.as_slice().context("Array not contiguous")?;
 
     // Get the XY for distance calc
-    let xy: Vec<(f64, f64)> = utils::get_xy(data.len(), ncols, trans)?;
+    let xy: Vec<(f64, f64)> = utils::get_xy(rows, ncols, trans)?;
 
     // Pre-calc valid cells to skip processing nan cells
     let valid_rows: Vec<usize> = (0..rows)

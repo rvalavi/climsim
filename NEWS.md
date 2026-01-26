@@ -1,3 +1,6 @@
+# Version 0.3.1
+* Bug fix.
+
 # Version 0.3.0
 * Added radius for local dissimilarity search.
 
