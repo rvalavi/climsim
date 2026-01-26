@@ -1,5 +1,5 @@
 from .utils import read_rast
-from climsim_rust import similaritypy
+from climsim_rust import dissimpy
 import os
 
 def dissim(
@@ -36,7 +36,7 @@ def dissim(
     
     r, t, geo, dim = read_rast(files)
 
-    outarray = similaritypy(
+    outarray = dissimpy(
         arr = r,
         trans = t,
         is_geo = geo,

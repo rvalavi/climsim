@@ -10,7 +10,7 @@ use crate::utils;
 use crate::distance;
 
 
-pub fn similarityrs(
+pub fn dissimrs(
     x: &Array2<f32>, 
     trans: &Affine,
     is_geo: bool, 
