@@ -25,7 +25,7 @@ pub fn dissimrs(
     anyhow::ensure!(cols >= 2, "Need at least 2 columns");
     anyhow::ensure!(bandwidth.is_finite() && bandwidth > 0.0, "bandwidth must be > 0 and finite");
 
-    // Ensure contiguous standard layout (row-major).
+    // Ensure contiguous standard layout (row-major) for faster mem access.
     let x = x.as_standard_layout().to_owned();
     let data = x.as_slice().context("Array not contiguous")?;
 
@@ -48,7 +48,7 @@ pub fn dissimrs(
     } else {
         valid_rows.clone()
     };
-    // Sort the sample one to have a much better cache misses
+    // Sort the samples to lower cache misses
     if nsample > 0 {
         sampled_rows.sort_unstable();
     }
