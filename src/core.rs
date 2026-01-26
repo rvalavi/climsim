@@ -84,3 +84,76 @@ pub fn dissimrs(
     Ok(out)
 }
 
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ndarray::Array2;
+    use approx::assert_relative_eq;
+
+    fn create_test_affine() -> Affine {
+        let aff = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        aff.into()
+    }
+
+    #[test]
+    fn test_dissimrs_basic() {
+        let x = Array2::from_shape_vec((3, 2), vec![
+            1.0, 2.0,
+            1.5, 2.5,
+            10.0, 20.0
+        ]).unwrap();
+
+        let trans = create_test_affine();
+        let result = dissimrs(&x, &trans, false, 1.0, None, 0, 2, 42).unwrap();
+
+        assert_eq!(result.len(), 3);
+        assert!(result.iter().all(|&v| v.is_finite()));
+        assert!(result[2] > result[0]);
+        assert!(result[2] > result[1]);
+    }
+
+    #[test]
+    fn test_dissimrs_with_nan() {
+        let x = Array2::from_shape_vec((4, 2), vec![
+            1.0, 2.0,
+            f32::NAN, 2.0,
+            3.0, 4.0,
+            5.0, f32::NAN,
+        ]).unwrap();
+
+        let trans = create_test_affine();
+        let result = dissimrs(&x, &trans, false, 1.0, None, 0, 2, 42).unwrap();
+
+        assert!(result[0].is_finite());
+        assert!(result[1].is_nan());
+        assert!(result[2].is_finite());
+        assert!(result[3].is_nan());
+    }
+
+    #[test]
+    fn test_dissimrs_identical_cells() {
+        let x = Array2::from_shape_vec((3, 2), vec![
+            1.0, 2.0,
+            1.0, 2.0,
+            1.0, 2.0,
+        ]).unwrap();
+
+        let trans = create_test_affine();
+        let result = dissimrs(&x, &trans, false, 1.0, None, 0, 2, 42).unwrap();
+
+        for &val in &result {
+            assert_relative_eq!(val, 0.0, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_dissimrs_invalid_bandwidth() {
+        let x = Array2::from_shape_vec((3, 2), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
+        let trans = create_test_affine();
+
+        assert!(dissimrs(&x, &trans, false, 0.0, None, 0, 2, 42).is_err());
+        assert!(dissimrs(&x, &trans, false, -1.0, None, 0, 2, 42).is_err());
+    }
+}

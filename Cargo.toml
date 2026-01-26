@@ -13,14 +13,21 @@ pyo3 = {version = "0.22", default-features = false, features = ["macros", "gil-r
 pyo3-built = "0.5"
 numpy = {version = "0.22", features = ["gil-refs"]}
 ndarray = "0.16"
-rayon = "1.10"  # or the latest version
+rayon = "1.11"
 num_cpus = "1.16"
 simsimd = "6.5.9"
 rand = "0.8"
 anyhow = "1.0.100"
 
+[dev-dependencies]
+approx = "0.5"
+
 [profile.release]
 strip = true
 lto = true
 codegen-units = 1
-opt-level = 3 
+opt-level = 3
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]

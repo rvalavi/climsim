@@ -27,3 +27,16 @@ Finally, compile and install the library into your active Python environment:
 ```bash
 maturin develop --release
 ```
+
+## Unit testing
+
+Testing core module (without Python binding):
+
+```bash
+cargo test core
+```
+Testing main Rust fucntion (same as above, now):
+
+```bash
+cargo test dissimrs
+```
