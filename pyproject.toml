@@ -4,6 +4,9 @@ build-backend = "maturin"
 
 [project]
 name = "climsim"
+description = "Climate dissimilarity and uniqueness calculation in Rust"
+authors = [{ name = "Roozbeh Valavi", email = "valavi.r@gmail.com" }]
+readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.23",
@@ -18,3 +21,8 @@ classifiers = [
 dynamic = ["version"]
 [tool.maturin]
 features = ["pyo3/extension-module"]
+
+[project.urls]
+Homepage = "https://github.com/rvalavi/climsim"
+Repository = "https://github.com/rvalavi/climsim"
+Issues = "https://github.com/rvalavi/climsim/issues"

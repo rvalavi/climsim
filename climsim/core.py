@@ -15,7 +15,7 @@ def dissim(
     
     Args:
         files: Path to gridded climate data (one multi-band or several files)
-        radius: Maximum distance (km) for neighbor sampling (None = all cells)
+        radius: Maximum distance (km) for neighbor sampling (None = all cells); this faster for projected coordinate systems.
         bandwidth: Gaussian kernel bandwidth for distance weighting
         n_sample: Number of non-NA cells to sample as neighbors (None = all valid cells)
         seed: Random seed for sampling
