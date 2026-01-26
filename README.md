@@ -1,4 +1,5 @@
 # climsim: climate dissimilarity and uniqueness
+[![CI](https://github.com/rvalavi/climsim/actions/workflows/CI.yml/badge.svg)](https://github.com/rvalavi/climsim/actions/workflows/CI.yml)
 
 This library measures climate dissimilarity and uniqueness for gridded spatial data. For each cell, it calculates how different local climate conditions are from other cells using kernel-weighted multivariate distance metrics, optionally within a radius.
 
