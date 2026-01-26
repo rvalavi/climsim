@@ -1,3 +1,3 @@
-from .core import simialrity
+from .core import dissim
 
 __all__ = ["core"]
