@@ -1,6 +1,6 @@
-# climsim: climate similarity and uniqueness
+# climsim: climate dissimilarity and uniqueness
 
-This library calculates cell-bassed climate similarity and uniqueness using multi-varaite ecological distance.
+This library measures climate dissimilarity and uniqueness for gridded spatial data. For each cell, it calculates how different local climate conditions are from other cells using kernel-weighted multivariate distance metrics, optionally within a radius.
 
 ## Installation
 

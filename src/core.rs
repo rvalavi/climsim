@@ -71,7 +71,7 @@ pub fn similarityrs(
 
                 let b = &data[j * cols..(j + 1) * cols];
                 let d = f32::euclidean(a, b).expect("Unequal length") as f64;
-                acc += (-d / bandwidth).exp();
+                acc += 1.0 - (-d / bandwidth).exp();
             }
             (i, acc)
         })
