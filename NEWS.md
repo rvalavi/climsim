@@ -1,5 +1,5 @@
 # Version 0.3.0
-* Added radius for local similarity search.
+* Added radius for local dissimilarity search.
 
 # Version 0.2.0
 * Added random sample global search.

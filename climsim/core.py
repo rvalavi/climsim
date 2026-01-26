@@ -2,19 +2,27 @@ from .utils import read_rast
 from climsim_rust import similaritypy
 import os
 
-def simialrity(
+def dissim(
         files: str,
         radius: float | None = None,
-        band_width: float = 1.0,
+        bandwidth: float = 1.0,
         n_sample: int | None = 10_000,
-        seed = 42,
-        n_threads = None,
+        seed: int = 42,
+        n_threads: int | None = None,
     ):
     """
-    Docstring for simialrity
+    Calculate climate dissimilarity for each grid cell.
     
-    :param file: Description
-    :type file: str
+    Args:
+        files: Path to gridded climate data (one multi-band or several files)
+        radius: Maximum distance (km) for neighbor sampling (None = all cells)
+        bandwidth: Gaussian kernel bandwidth for distance weighting
+        n_sample: Number of non-NA cells to sample as neighbors (None = all valid cells)
+        seed: Random seed for sampling
+        n_threads: Number of parallel threads (None = auto)
+    
+    Returns:
+        A numpy array of dissimilarity scores per cell
     """
 
     if n_threads is None:
@@ -34,7 +42,7 @@ def simialrity(
         is_geo = geo,
         nrows = dim[0],
         ncols = dim[1],
-        bandwidth = band_width,
+        bandwidth = bandwidth,
         nsample = n_sample,
         seed = seed,
         n_cores = n_threads,
