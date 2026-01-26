@@ -38,7 +38,7 @@ pub fn dissimrs(
         .collect();
 
     // Select random samples
-    let sampled_rows: Vec<usize> = if nsample > 0 {
+    let mut sampled_rows: Vec<usize> = if nsample > 0 {
         let k = nsample.min(valid_rows.len());
         let mut rng = StdRng::seed_from_u64(seed);
         sample(&mut rng, valid_rows.len(), k)
@@ -48,6 +48,10 @@ pub fn dissimrs(
     } else {
         valid_rows.clone()
     };
+    // Sort the sample one to have a much better cache misses
+    if nsample > 0 {
+        sampled_rows.sort_unstable();
+    }
 
     // Compute only for sampled i; everything else stays NaN
     let mut out = vec![f64::NAN; rows];
