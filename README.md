@@ -33,7 +33,7 @@ maturin develop --release
 
 Impelmeted method:
 * `dissim`: Calculates a kernel-weighted multivariate dissimilarity between climate samples. It sums distances across variables (optionally within a spatial neighborhood) to quantify how different each sample’s climate is compared to others.
-* `climdist`: Computes the minimum climate or environmental distance from each focal sample point to any other in the dataset.
+* `climdist`: Computes the minimum climate/environmental distance of a cell from a sample point.
 
 ## Unit testing
 
