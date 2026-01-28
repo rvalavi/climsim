@@ -23,7 +23,13 @@ def climdist(
 
     if n_threads is None:
         n_threads = os.cpu_count() or 1
+
+    if len(samples_x) != len(samples_y):
+        raise ValueError(
+            f"x_coor (n={len(samples_x)}) and y_coor (n={len(samples_y)}) lengths do not match"
+        )
     
+    # Read rasters, transform, crs, row/col
     r, t, _, dim = read_rast(files)
 
     outarray = climdistpy(
@@ -71,6 +77,7 @@ def dissim(
     if radius is not None and radius <= 0:
         radius = None
     
+    # Read rasters, transform, crs, row/col
     r, t, geo, dim = read_rast(files)
 
     outarray = dissimpy(
