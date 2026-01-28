@@ -1,3 +1,6 @@
+# Version 0.4.0
+* Add `climdist` for calculating the minimum distance to a sample point.
+  
 # Version 0.3.1
 * Bug fix.
 

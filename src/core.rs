@@ -10,6 +10,66 @@ use crate::utils;
 use crate::distance;
 
 
+/// Calculate the min climatic/environmental distance to sample point
+pub fn climdistrs(
+    x: &Array2<f32>, 
+    trans: &Affine,     
+    samples_x: &Vec<f64>,
+    samples_y: &Vec<f64>,
+    nrows: usize,
+    ncols: usize,
+) -> Result<Vec<f64>> {
+    // Flatten array rows: number of cells; cols: number of raster bands
+    let (total_cells, bands) = x.dim();
+    anyhow::ensure!(bands >= 2, "Need at least 2 columns");
+
+    // Ensure contiguous standard layout (row-major) for faster mem access.
+    let x = x.as_standard_layout().to_owned();
+    let data = x.as_slice().context("Array not contiguous")?;
+    
+    // Pre-calc valid cells to skip processing nan cells
+    let valid_rows: Vec<usize> = (0..total_cells)
+        .filter(|&i| data[i * bands..(i + 1) * bands].iter().all(|v| v.is_finite()))
+        .collect();
+
+    // Get flatten array index from xy
+    let samples: Vec<usize> = samples_x.iter()
+        .zip(samples_y.iter())
+        .filter_map(|(x, y)| {
+            let (row, col) = trans.ij(*x, *y, nrows, ncols)?;  // Pass dimensions
+            Some(row * ncols + col)
+        })
+        .collect();
+
+    anyhow::ensure!(!samples.is_empty(), "No valid sample points found");
+    
+    // Compute only for sampled i; everything else stays NaN
+    let mut out = vec![f64::NAN; total_cells];
+
+    let results: Vec<(usize, f64)> = valid_rows
+        .into_par_iter()
+        .map(|i| {
+            let a = &data[i * bands..(i + 1) * bands];
+            let mut mn = f64::INFINITY;
+
+            for &j in &samples {                
+                let b = &data[j * bands..(j + 1) * bands];
+                let d = f32::euclidean(a, b).expect("Unequal length") as f64;
+                mn = mn.min(d)
+            }
+            (i, mn)
+        })
+        .collect();
+
+    for (i, v) in results {
+        out[i] = v;
+    }
+
+    Ok(out)
+}
+
+
+// Climate dissimilarity index; both local and gloabl measures
 pub fn dissimrs(
     x: &Array2<f32>, 
     trans: &Affine,
@@ -21,8 +81,8 @@ pub fn dissimrs(
     seed: u64
 ) -> Result<Vec<f64>> {
     // Flatten array rows: number of cells; cols: number of raster bands
-    let (rows, cols) = x.dim();
-    anyhow::ensure!(cols >= 2, "Need at least 2 columns");
+    let (total_cells, bands) = x.dim();
+    anyhow::ensure!(bands >= 2, "Need at least 2 columns");
     anyhow::ensure!(bandwidth.is_finite() && bandwidth > 0.0, "bandwidth must be > 0 and finite");
 
     // Ensure contiguous standard layout (row-major) for faster mem access.
@@ -30,11 +90,11 @@ pub fn dissimrs(
     let data = x.as_slice().context("Array not contiguous")?;
 
     // Get the XY for distance calc
-    let xy: Vec<(f64, f64)> = utils::get_xy(rows, ncols, trans)?;
+    let xy: Vec<(f64, f64)> = utils::get_xy(total_cells, ncols, trans)?;
 
     // Pre-calc valid cells to skip processing nan cells
-    let valid_rows: Vec<usize> = (0..rows)
-        .filter(|&i| data[i * cols..(i + 1) * cols].iter().all(|v| v.is_finite()))
+    let valid_rows: Vec<usize> = (0..total_cells)
+        .filter(|&i| data[i * bands..(i + 1) * bands].iter().all(|v| v.is_finite()))
         .collect();
 
     // Select random samples
@@ -54,12 +114,12 @@ pub fn dissimrs(
     }
 
     // Compute only for sampled i; everything else stays NaN
-    let mut out = vec![f64::NAN; rows];
+    let mut out = vec![f64::NAN; total_cells];
 
     let results: Vec<(usize, f64)> = valid_rows
         .into_par_iter()
         .map(|i| {
-            let a = &data[i * cols..(i + 1) * cols];
+            let a = &data[i * bands..(i + 1) * bands];
             let mut acc = 0.0f64;
 
             let (x1, y1) = xy[i];
@@ -74,7 +134,7 @@ pub fn dissimrs(
                     if dist > r { continue; }
                 }
 
-                let b = &data[j * cols..(j + 1) * cols];
+                let b = &data[j * bands..(j + 1) * bands];
                 let d = f32::euclidean(a, b).expect("Unequal length") as f64;
                 acc += 1.0 - (-d / bandwidth).exp();
             }

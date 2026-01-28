@@ -29,6 +29,12 @@ Finally, compile and install the library into your active Python environment:
 maturin develop --release
 ```
 
+## Usage
+
+Impelmeted method:
+* `dissim`: Calculates a kernel-weighted multivariate dissimilarity between climate samples. It sums distances across variables (optionally within a spatial neighborhood) to quantify how different each sample’s climate is compared to others.
+* `climdist`: Computes the minimum climate or environmental distance from each focal sample point to any other in the dataset.
+
 ## Unit testing
 
 Testing core module (without Python binding):

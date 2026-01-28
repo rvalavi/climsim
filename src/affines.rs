@@ -21,6 +21,27 @@ impl Affine {
         let y = self.y_skew * col_f + self.y_scale * row_f + self.y_origin;
         (x, y)
     }
+
+    /// Convert (x, y) coordinates to continuous (row, col) indices.
+    /// It performs the inverse affine transformation.
+    pub fn ij(&self, x: f64, y: f64, nrows: usize, ncols: usize) -> Option<(usize, usize)> {
+        let det = self.x_scale * self.y_scale - self.x_skew * self.y_skew;
+        
+        if det.abs() < 1e-10 {
+            return None;
+        }
+        
+        let dx = x - self.x_origin;
+        let dy = y - self.y_origin;
+        let col = (self.y_scale * dx - self.x_skew * dy) / det;
+        let row = (-self.y_skew * dx + self.x_scale * dy) / det;
+
+        if row < 0.0 || col < 0.0 || row >= nrows as f64 || col >= ncols as f64 {
+            None
+        } else {
+            Some((row.floor() as usize, col.floor() as usize))
+        }
+    }
 }
 
 impl From<(f64, f64, f64, f64, f64, f64)> for Affine {

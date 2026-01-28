@@ -1,6 +1,43 @@
 from .utils import read_rast
-from climsim_rust import dissimpy
+from climsim_rust import dissimpy, climdistpy
 import os
+
+def climdist(
+        files: str,
+        samples_x, 
+        samples_y,
+        n_threads: int | None = None,
+    ):
+    """
+    Calculate climate dissimilarity for each grid cell.
+    
+    Args:
+        files: Path to gridded climate data (one multi-band or several files)
+        samples_x, 
+        samples_y,
+        n_threads: Number of parallel threads (None = auto)
+    
+    Returns:
+        A numpy array of dissimilarity scores per cell
+    """
+
+    if n_threads is None:
+        n_threads = os.cpu_count() or 1
+    
+    r, t, _, dim = read_rast(files)
+
+    outarray = climdistpy(
+        arr = r,
+        trans = t,
+        samples_x = samples_x,
+        samples_y = samples_y,
+        nrows = dim[0],
+        ncols = dim[1],
+        n_cores = n_threads,
+    )
+
+    return outarray
+
 
 def dissim(
         files: str,
