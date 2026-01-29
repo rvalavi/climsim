@@ -4,8 +4,9 @@ use simsimd::SpatialSimilarity; // gives f32::euclidean, etc.
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand::seq::index::sample;
-use anyhow::{Result, Context};
+use anyhow::Result;
 use crate::affines::Affine;
+use crate::utils::Matrix;
 use crate::utils;
 use crate::distance;
 
@@ -19,29 +20,32 @@ pub fn climdistrs(
     nrows: usize,
     ncols: usize,
 ) -> Result<Vec<f64>> {
-    // Flatten array rows: number of cells; cols: number of raster bands
-    let (total_cells, bands) = x.dim();
-    anyhow::ensure!(bands >= 2, "Need at least 2 columns");
-
     // Ensure contiguous standard layout (row-major) for faster mem access.
-    let x = x.as_standard_layout().to_owned();
-    let data = x.as_slice().context("Array not contiguous")?;
+    let data = Matrix::from_array(x)?;
+
+    // Flatten array rows: number of cells; cols: number of raster bands
+    let (total_cells, bands) = data.dim();
+    anyhow::ensure!(bands >= 2, "Need at least 2 columns");
     
     // Pre-calc valid cells to skip processing nan cells
     let valid_rows: Vec<usize> = (0..total_cells)
-        .filter(|&i| data[i * bands..(i + 1) * bands].iter().all(|v| v.is_finite()))
+        .filter(|&i| data.row(i).iter().all(|v| v.is_finite()))
         .collect();
 
     // Get flatten array index from xy
-    let samples: Vec<usize> = samples_x.iter()
+    let mut samples: Vec<usize> = samples_x.iter()
         .zip(samples_y.iter())
         .filter_map(|(x, y)| {
-            let (row, col) = trans.ij(*x, *y, nrows, ncols)?;  // Pass dimensions
+            let (row, col) = trans.ij(*x, *y, nrows, ncols)?;
             Some(row * ncols + col)
         })
         .collect();
 
     anyhow::ensure!(!samples.is_empty(), "No valid sample points found");
+    // Sort the samples to lower cache misses
+    if !samples.is_empty() {
+        samples.sort_unstable();
+    }
     
     // Compute only for sampled i; everything else stays NaN
     let mut out = vec![f64::NAN; total_cells];
@@ -49,11 +53,13 @@ pub fn climdistrs(
     let results: Vec<(usize, f64)> = valid_rows
         .into_par_iter()
         .map(|i| {
-            let a = &data[i * bands..(i + 1) * bands];
+            let a = data.row(i);
+
             let mut mn = f64::INFINITY;
 
-            for &j in &samples {                
-                let b = &data[j * bands..(j + 1) * bands];
+            for &j in &samples {              
+                let b = data.row(j);
+                // NOTE: make this an Option<f64> to ignore sample points with NAN values  
                 let d = f32::euclidean(a, b).expect("Unequal length") as f64;
                 mn = mn.min(d)
             }
@@ -80,21 +86,20 @@ pub fn dissimrs(
     ncols: usize,
     seed: u64
 ) -> Result<Vec<f64>> {
+    // Ensure contiguous standard layout (row-major) for faster mem access.
+    let data = Matrix::from_array(x)?;
+
     // Flatten array rows: number of cells; cols: number of raster bands
-    let (total_cells, bands) = x.dim();
+    let (total_cells, bands) = data.dim();
     anyhow::ensure!(bands >= 2, "Need at least 2 columns");
     anyhow::ensure!(bandwidth.is_finite() && bandwidth > 0.0, "bandwidth must be > 0 and finite");
-
-    // Ensure contiguous standard layout (row-major) for faster mem access.
-    let x = x.as_standard_layout().to_owned();
-    let data = x.as_slice().context("Array not contiguous")?;
 
     // Get the XY for distance calc
     let xy: Vec<(f64, f64)> = utils::get_xy(total_cells, ncols, trans)?;
 
     // Pre-calc valid cells to skip processing nan cells
     let valid_rows: Vec<usize> = (0..total_cells)
-        .filter(|&i| data[i * bands..(i + 1) * bands].iter().all(|v| v.is_finite()))
+        .filter(|&i| data.row(i).iter().all(|v| v.is_finite()))
         .collect();
 
     // Select random samples
@@ -119,10 +124,10 @@ pub fn dissimrs(
     let results: Vec<(usize, f64)> = valid_rows
         .into_par_iter()
         .map(|i| {
-            let a = &data[i * bands..(i + 1) * bands];
-            let mut acc = 0.0f64;
-
+            let a = data.row(i);
             let (x1, y1) = xy[i];
+            
+            let mut acc = 0.0f64;
 
             for &j in &sampled_rows {
                 if j == i { continue; }
@@ -134,7 +139,7 @@ pub fn dissimrs(
                     if dist > r { continue; }
                 }
 
-                let b = &data[j * bands..(j + 1) * bands];
+                let b = data.row(j);
                 let d = f32::euclidean(a, b).expect("Unequal length") as f64;
                 acc += 1.0 - (-d / bandwidth).exp();
             }

@@ -3,6 +3,47 @@ use numpy::PyArray2;
 use pyo3::{Bound, PyAny, PyResult};
 use pyo3::types::PyAnyMethods;
 use crate::affines::Affine;
+use anyhow::Context;
+
+
+// A contiguous array struct
+#[derive(Debug, Clone)]
+pub struct Matrix {
+    data: Vec<f32>,
+    nrows: usize,
+    ncols: usize,
+}
+
+impl Matrix {
+    pub fn from_array(x: &Array2<f32>) -> anyhow::Result<Self> {
+        let x = x.as_standard_layout().to_owned();
+        let (nrows, ncols) = x.dim();
+        let data = x.as_slice()
+            .context("Array not contiguous")?
+            .to_vec();
+        
+        Ok(Self { data, nrows, ncols })
+    }
+    
+    #[inline]
+    pub fn row(&self, i: usize) -> &[f32] {
+        let start = i * self.ncols;
+        &self.data[start..start + self.ncols]
+    }
+    
+    pub fn nrows(&self) -> usize {
+        self.nrows
+    }
+    
+    pub fn ncols(&self) -> usize {
+        self.ncols
+    }
+
+    pub fn dim(&self) -> (usize, usize) {
+        (self.nrows(), self.ncols())
+    }
+}
+
 
 /// Simple way to convert a Python 2D numpy array into a Rust `Array2<f32>`.
 pub fn to_array<'py>(x: &Bound<'py, PyAny>) -> PyResult<Array2<f32>> {

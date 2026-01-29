@@ -1,7 +1,7 @@
-# climsim: climate dissimilarity and uniqueness
+# climsim
 [![CI](https://github.com/rvalavi/climsim/actions/workflows/CI.yml/badge.svg)](https://github.com/rvalavi/climsim/actions/workflows/CI.yml)
 
-This library measures climate dissimilarity and uniqueness for gridded spatial data. For each cell, it calculates how different local climate conditions are from other cells using kernel-weighted multivariate distance metrics, optionally within a radius.
+`climsim` is a Python package for measuring climate similarity, dissimilarity, and environmental uniqueness in gridded spatial data. It computes kernel-weighted multivariate distances that quantify how distinct local climate conditions are compared with other locations, optionally within a spatial radius.
 
 ## Installation
 
@@ -31,7 +31,7 @@ maturin develop --release
 
 ## Usage
 
-Impelmeted method:
+The currently impelmeted methods:
 * `dissim`: Calculates a kernel-weighted multivariate dissimilarity between climate samples. It sums distances across variables (optionally within a spatial neighborhood) to quantify how different each sample’s climate is compared to others.
 * `climdist`: Computes the minimum climate/environmental distance of a cell from a sample point.
 
