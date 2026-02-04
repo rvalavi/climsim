@@ -120,6 +120,7 @@ pub fn dissimrs(
 
     // Compute only for sampled i; everything else stays NaN
     let mut out = vec![f64::NAN; total_cells];
+    let inv_bw = 1.0f64 / bandwidth;
 
     let results: Vec<(usize, f64)> = valid_rows
         .into_par_iter()
@@ -128,6 +129,7 @@ pub fn dissimrs(
             let (x1, y1) = xy[i];
             
             let mut acc = 0.0f64;
+            let mut n = 0.0f64;
 
             for &j in &sampled_rows {
                 if j == i { continue; }
@@ -139,11 +141,15 @@ pub fn dissimrs(
                     if dist > r { continue; }
                 }
 
+                n += 1.0;
+
                 let b = data.row(j);
                 let d = f32::euclidean(a, b).expect("Unequal length") as f64;
-                acc += 1.0 - (-d / bandwidth).exp();
+                acc += 1.0 - (-(d * inv_bw)).exp();
             }
-            (i, acc)
+
+            let avg = if n > 0.0 { acc / n } else { 0.0 };
+            (i, avg)
         })
         .collect();
 

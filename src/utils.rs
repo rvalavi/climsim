@@ -10,8 +10,8 @@ use anyhow::Context;
 #[derive(Debug, Clone)]
 pub struct Matrix {
     data: Vec<f32>,
-    nrows: usize,
-    ncols: usize,
+    nrows: usize, // total rowsß
+    ncols: usize, // num bands
 }
 
 impl Matrix {
@@ -30,17 +30,9 @@ impl Matrix {
         let start = i * self.ncols;
         &self.data[start..start + self.ncols]
     }
-    
-    pub fn nrows(&self) -> usize {
-        self.nrows
-    }
-    
-    pub fn ncols(&self) -> usize {
-        self.ncols
-    }
 
     pub fn dim(&self) -> (usize, usize) {
-        (self.nrows(), self.ncols())
+        (self.nrows, self.ncols)
     }
 }
 

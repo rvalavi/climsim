@@ -1,3 +1,6 @@
+# Version 0.5.0
+* Returning average dissimilarity instead of sum; solved the edge issue for local version.
+
 # Version 0.4.0
 * Add `climdist` for calculating the minimum distance to a sample point.
   
