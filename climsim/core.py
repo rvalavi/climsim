@@ -47,7 +47,7 @@ def climdist(
 
 def dissim(
         files: str,
-        radius: float | None = None,
+        radius_km: float | None = None,
         bandwidth: float = 1.0,
         n_sample: int | None = 10_000,
         seed: int = 42,
@@ -58,7 +58,7 @@ def dissim(
     
     Args:
         files: Path to gridded climate data (one multi-band or several files)
-        radius: Maximum distance (km) for neighbor sampling (None = all cells); this faster for projected coordinate systems.
+        radius_km: Maximum distance (km) for neighbor sampling (None = all cells); this faster for projected coordinate systems.
         bandwidth: Gaussian kernel bandwidth for distance weighting
         n_sample: Number of non-NA cells to sample as neighbors (None = all valid cells)
         seed: Random seed for sampling
@@ -74,8 +74,8 @@ def dissim(
     if n_sample is None or n_sample < 0:
         n_sample = 0
     
-    if radius is not None and radius <= 0:
-        radius = None
+    if radius_km is not None and radius_km <= 0:
+        radius_km = None
     
     # Read rasters, transform, crs, row/col
     r, t, geo, dim = read_rast(files)
@@ -90,7 +90,7 @@ def dissim(
         nsample = n_sample,
         seed = seed,
         n_cores = n_threads,
-        radius = radius,
+        radius = radius_km,
     )
 
     return outarray
